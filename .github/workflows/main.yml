@@ -28,4 +28,4 @@ jobs:
           script: |
             cd /home/ubuntu/strapi-project
             npm install
-            npm run develop
+            npm run start > /dev/null 2>&1 &
