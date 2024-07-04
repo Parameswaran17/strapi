@@ -13,19 +13,33 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Install dependencies
-        run: npm install
-
       - name: Build Strapi
-        run: npm run build
+        run: npm install && npm run build
 
       - name: Deploy to EC2
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v0.2.0
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
+            # Navigate to the project directory
             cd /home/ubuntu/strapi
+
+            # Pull the latest changes
+            git pull origin master
+
+            # Install dependencies
             npm install
-            npm run start > /dev/null 2>&1 &
+
+            # Build the project (optional, if not done in GitHub Actions)
+            npm run build
+
+            # Restart the application using pm2
+            pm2 restart strapi || pm2 start npm --name strapi -- start
+
+            # Save the pm2 process list
+            pm2 save
+
+            # Set pm2 to start on boot
+            pm2 startup
